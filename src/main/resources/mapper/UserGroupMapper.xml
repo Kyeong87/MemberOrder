@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.home.work.mapper.UserGroupMapper">
+    <select id="getUserGroupList" resultType="MemberGetDto" parameterType="MemberSetDto">
+        select
+        *
+        from(
+            select
+                m.id
+                ,m.name as memberName
+                ,m.nick_name as nickName
+                ,m.phone as phone
+                ,m.email as email
+                ,m.gender as gender
+                ,m.register_date
+                ,o.member_id
+                ,o.order_number as orderNumber
+                ,o.name as orderName
+                ,o.register_date as orderRegisterDate
+            from member m
+            left join orders o on m.id=o.member_id
+            where (o.member_id, o.register_date) in (
+                select member_id, max(register_date) as date_time
+                from orders group by member_id
+            )
+            <if test = 'email != null'>
+                AND email = #{email}
+            </if>
+            <if test = 'name != null and name != ""'>
+                 AND m.name = #{name}
+            </if>
+        order by o.register_date desc
+        ) t
+        group by t.member_id
+        <if test="startPage != null and startPage !=''">
+            LIMIT #{startPage} , #{pageSize}
+        </if>
+    </select>
+    <select id="getMemberDetail" resultType="Member" parameterType="String">
+        SELECT
+        *
+        FROM member AS m
+        WHERE m.id = #{memberId}
+    </select>
+    <select id="getUserTotalCount" resultType="Integer">
+        SELECT
+            count(*)
+        FROM member AS m
+    </select>
+</mapper>
